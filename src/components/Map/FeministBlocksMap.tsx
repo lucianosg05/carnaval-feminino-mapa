@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useNavigate } from 'react-router-dom';
 import mapPinIcon from '@/assets/map-pin-block.png';
 
 interface Block {
@@ -28,6 +29,7 @@ const FeministBlocksMap: React.FC<FeministBlocksMapProps> = ({
   onBlockSelect,
   selectedBlockId 
 }) => {
+  const navigate = useNavigate();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
@@ -56,7 +58,7 @@ const FeministBlocksMap: React.FC<FeministBlocksMapProps> = ({
       const marker = L.marker(block.local, { icon: customIcon })
         .addTo(map.current!)
         .bindPopup(`
-          <div class="p-4 max-w-xs">
+          <div class="p-4 max-w-xs cursor-pointer" onclick="window.dispatchEvent(new CustomEvent('blockClick', { detail: '${block.id}' }))">
             <img src="${block.foto}" alt="${block.nome}" class="w-full h-24 object-cover rounded-md mb-3">
             <h3 class="font-bold text-lg mb-2 text-primary">${block.nome}</h3>
             <p class="text-sm text-muted-foreground mb-2">${block.descricao}</p>
@@ -65,10 +67,15 @@ const FeministBlocksMap: React.FC<FeministBlocksMapProps> = ({
               <p><strong>Vertente:</strong> ${block.vertenteFeminista}</p>
               <p><strong>Contato:</strong> ${block.contato}</p>
             </div>
+            <div class="mt-3 pt-2 border-t border-gray-200">
+              <p class="text-xs text-center text-primary font-medium">Clique para ver perfil completo</p>
+            </div>
           </div>
         `);
 
       marker.on('click', () => {
+        // Navigate directly to block profile
+        navigate(`/bloco/${block.id}`);
         onBlockSelect?.(block);
       });
 
