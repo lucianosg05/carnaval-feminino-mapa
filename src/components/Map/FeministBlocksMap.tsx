@@ -13,6 +13,7 @@ interface Block {
   local: [number, number];
   cidade: string;
   estado: string;
+  endereco: string;
   vertenteFeminista: string;
   formacao: string;
   cache?: string;
@@ -91,13 +92,14 @@ const FeministBlocksMap: React.FC<FeministBlocksMapProps> = ({
         onBlockSelect?.(block);
       });
 
-      // Add popup with block info
+      // Add popup with block info including address
       marker.bindPopup(`
         <div class="p-4 max-w-xs">
           <img src="${block.foto}" alt="${block.nome}" class="w-full h-24 object-cover rounded-md mb-3">
           <h3 class="font-bold text-lg mb-2 text-primary">${block.nome}</h3>
           <p class="text-sm text-muted-foreground mb-2">${block.descricao}</p>
           <div class="space-y-1 text-xs">
+            <p><strong>📍 Endereço:</strong> ${block.endereco}</p>
             <p><strong>Cidade:</strong> ${block.cidade}, ${block.estado}</p>
             <p><strong>Vertente:</strong> ${block.vertenteFeminista}</p>
             <p><strong>Contato:</strong> ${block.contato}</p>
