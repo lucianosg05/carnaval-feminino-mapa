@@ -35,7 +35,7 @@ const FeministBlocksMap: React.FC<FeministBlocksMapProps> = ({
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || map.current) return;
 
     // Create custom icon
     const customIcon = L.icon({
@@ -53,41 +53,64 @@ const FeministBlocksMap: React.FC<FeministBlocksMapProps> = ({
       attribution: '© OpenStreetMap contributors'
     }).addTo(map.current);
 
-    // Add markers for each block
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
+
+  // Add markers when blocks change
+  useEffect(() => {
+    if (!map.current) return;
+
+    // Clear existing markers
+    Object.values(markersRef.current).forEach(marker => {
+      map.current?.removeLayer(marker);
+    });
+    markersRef.current = {};
+
+    // Create custom icon
+    const customIcon = L.icon({
+      iconUrl: mapPinIcon,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
+    });
+
+    // Add new markers
     blocks.forEach((block) => {
       const marker = L.marker(block.local, { icon: customIcon })
-        .addTo(map.current!)
-        .bindPopup(`
-          <div class="p-4 max-w-xs cursor-pointer" onclick="window.dispatchEvent(new CustomEvent('blockClick', { detail: '${block.id}' }))">
-            <img src="${block.foto}" alt="${block.nome}" class="w-full h-24 object-cover rounded-md mb-3">
-            <h3 class="font-bold text-lg mb-2 text-primary">${block.nome}</h3>
-            <p class="text-sm text-muted-foreground mb-2">${block.descricao}</p>
-            <div class="space-y-1 text-xs">
-              <p><strong>Cidade:</strong> ${block.cidade}, ${block.estado}</p>
-              <p><strong>Vertente:</strong> ${block.vertenteFeminista}</p>
-              <p><strong>Contato:</strong> ${block.contato}</p>
-            </div>
-            <div class="mt-3 pt-2 border-t border-gray-200">
-              <p class="text-xs text-center text-primary font-medium">Clique para ver perfil completo</p>
-            </div>
-          </div>
-        `);
+        .addTo(map.current!);
 
+      // Add click event to marker (not popup)
       marker.on('click', () => {
-        // Navigate directly to block profile
+        console.log('Clicking block:', block.id); // Debug log
         navigate(`/bloco/${block.id}`);
         onBlockSelect?.(block);
       });
 
+      // Add popup with block info
+      marker.bindPopup(`
+        <div class="p-4 max-w-xs">
+          <img src="${block.foto}" alt="${block.nome}" class="w-full h-24 object-cover rounded-md mb-3">
+          <h3 class="font-bold text-lg mb-2 text-primary">${block.nome}</h3>
+          <p class="text-sm text-muted-foreground mb-2">${block.descricao}</p>
+          <div class="space-y-1 text-xs">
+            <p><strong>Cidade:</strong> ${block.cidade}, ${block.estado}</p>
+            <p><strong>Vertente:</strong> ${block.vertenteFeminista}</p>
+            <p><strong>Contato:</strong> ${block.contato}</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-gray-200">
+            <p class="text-xs text-center text-primary font-medium">Clique no marcador para ver perfil completo</p>
+          </div>
+        </div>
+      `);
+
       markersRef.current[block.id] = marker;
     });
-
-    return () => {
-      if (map.current) {
-        map.current.remove();
-      }
-    };
-  }, [blocks, onBlockSelect]);
+  }, [blocks, navigate, onBlockSelect]);
 
   // Highlight selected block
   useEffect(() => {
